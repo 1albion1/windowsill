@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src cats:; style-src cats:; script-src cats:;"
+    />
+    <title>Windowsill</title>
+    <link rel="stylesheet" href="welcome.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <img class="hero__icon" src="/art/icon-256.png" alt="" width="72" height="72" />
+      <h1>Windowsill</h1>
+      <p class="hero__line">Your cats live on your desktop.</p>
+    </header>
+
+    <main>
+      <section class="card card--warn">
+        <div class="card__mark">
+          <img src="/art/tray.svg" alt="" width="26" height="26" />
+        </div>
+        <div class="card__body">
+          <h2>Everything lives in your tray</h2>
+          <p>
+            Look for this cat near the clock. Pausing, adding cats and quitting all happen from its
+            menu — Windowsill has no window of its own.
+          </p>
+          <p class="note">
+            <strong>Windows 11 hides new tray icons.</strong> Click the <strong>^</strong> arrow next
+            to the clock to find it, then drag the cat down onto the taskbar so it stays visible.
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__mark card__mark--step">1</div>
+        <div class="card__body">
+          <h2>Cut your cat out of a photo</h2>
+          <p>
+            Open a photo in <strong>Paint</strong>, click <strong>Remove background</strong>, then
+            <strong>Save as → PNG</strong>. No other software needed.
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__mark card__mark--step">2</div>
+        <div class="card__body">
+          <h2>Name the file after what your cat is doing</h2>
+          <p>Make a folder named after your cat and put the photos in it:</p>
+          <pre><code>Mochi/
+    sit.png
+    walk-left.png
+    sleep-right.png</code></pre>
+          <p>
+            The filename is the instruction. <code>-left</code> or <code>-right</code> says which way
+            your cat faces <em>in that photo</em> — without it a left-facing cat walks backwards.
+          </p>
+          <p class="note">
+            One photo is enough to start. A folder with just <code>sit.png</code> gives you a working
+            cat. Sizes are worked out automatically.
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__mark card__mark--step">3</div>
+        <div class="card__body">
+          <h2>Reload</h2>
+          <p>Right-click the tray icon and choose <strong>Reload cats</strong>. Yours appear.</p>
+          <div class="actions">
+            <button id="open-folder" class="button button--primary" type="button">
+              Open cats folder
+            </button>
+            <button id="open-guide" class="button" type="button">Full guide</button>
+          </div>
+        </div>
+      </section>
+
+      <label class="toggle">
+        <input id="auto-start" type="checkbox" />
+        <span>Start Windowsill when I sign in to Windows</span>
+      </label>
+    </main>
+
+    <footer>
+      <button id="quit" class="button button--quiet" type="button">Quit Windowsill</button>
+      <button id="done" class="button button--primary" type="button">Got it</button>
+    </footer>
+
+    <script type="module" src="welcome.js"></script>
+  </body>
+</html>

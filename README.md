@@ -16,7 +16,9 @@ Download **`Windowsill-setup.exe`** from the [latest release](../../releases/lat
 
 Windows will show *"Windows protected your PC"* the first time. The installer is not code-signed — that needs a paid certificate, which is hard to justify for a free cat toy. Click **More info → Run anyway**.
 
-A cat icon appears in your system tray. Everything lives there: pause, reload, start-with-Windows, quit.
+A window opens the first time explaining how it works, and a cat icon appears in your system tray. Everything lives in that tray menu: pause, reload, start-with-Windows, quit.
+
+> **Windows 11 hides new tray icons.** If you can't see the cat, click the **^** arrow next to the clock, then drag it down onto the taskbar to keep it there. You can reopen the instructions any time with **How to add your cats…** in that menu.
 
 It starts with a small drawn cat so there's something to look at. Replacing it with your own is the point.
 
@@ -165,6 +167,7 @@ Installed, the app's own folder is a read-only archive, so cats live somewhere y
 | [src/main/desktop.js](src/main/desktop.js) | Virtual-desktop geometry across all monitors |
 | [src/main/protocol.js](src/main/protocol.js) | `cats://` scheme serving both the UI and the cat images |
 | [src/main/cats-library.js](src/main/cats-library.js) | Reads the cats folder into cat definitions |
+| [src/main/welcome-window.js](src/main/welcome-window.js) | First-run window: what this is, where the tray is, how to quit |
 | [src/renderer/sprites.js](src/renderer/sprites.js) | Decodes poses, builds alpha hit-masks, derives scales |
 | [src/renderer/behavior.js](src/renderer/behavior.js) | The state machine and its transition weights |
 | [src/renderer/cat.js](src/renderer/cat.js) | Physics, procedural animation, rendering |

@@ -8,8 +8,11 @@ const { getDesktopGeometry } = require('./desktop');
 const { loadCats } = require('./cats-library');
 const { createTrayIcon } = require('./tray-icon');
 const { SCHEME, ORIGIN, createHandler } = require('./protocol');
+const { showWelcome } = require('./welcome-window');
+const settings = require('./settings');
 
 const APP_ID = 'com.windowsill.desktop';
+const GUIDE_URL = 'https://github.com/1albion1/windowsill#add-your-cats';
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 const IS_DEV = process.argv.includes('--dev');
 
@@ -155,6 +158,7 @@ function buildTrayMenu() {
       { type: 'separator' },
       { label: 'Reload cats', click: () => overlay?.webContents.send('overlay:cats', loadCats(catsRoot)) },
       { label: 'Open cats folder…', click: () => shell.openPath(catsRoot) },
+      { label: 'How to add your cats…', click: () => showWelcome() },
       { type: 'separator' },
       {
         // In development this would register electron.exe rather than the app,
@@ -196,6 +200,16 @@ function registerIpc() {
   });
 
   ipcMain.on('app:open-cats-folder', () => shell.openPath(catsRoot));
+  ipcMain.on('app:open-guide', () => shell.openExternal(GUIDE_URL));
+  ipcMain.on('app:quit', () => app.exit(0));
+
+  ipcMain.on('welcome:close', (event) => BrowserWindow.fromWebContents(event.sender)?.close());
+
+  ipcMain.handle('app:get-auto-start', () => app.getLoginItemSettings().openAtLogin);
+  ipcMain.handle('app:set-auto-start', (_event, enabled) => {
+    setAutoStart(enabled);
+    return app.getLoginItemSettings().openAtLogin;
+  });
 
   ipcMain.on('overlay:ready', (_event, summary) => {
     console.log(`[cats] overlay ready: ${summary.count} cat(s) — ${summary.names.join(', ') || 'none'}`);
@@ -214,11 +228,16 @@ if (!app.requestSingleInstanceLock()) {
     fs.mkdirSync(catsRoot, { recursive: true });
     seedCats();
 
-    protocol.handle(SCHEME, createHandler({ rendererRoot: RENDERER_ROOT, catsRoot }));
+    protocol.handle(SCHEME, createHandler({ rendererRoot: RENDERER_ROOT, catsRoot, assetsRoot }));
 
     registerIpc();
     createOverlay();
     createTray();
+
+    if (!settings.get('welcomed', false)) {
+      settings.set('welcomed', true);
+      showWelcome();
+    }
 
     screen.on('display-added', pushGeometry);
     screen.on('display-removed', pushGeometry);

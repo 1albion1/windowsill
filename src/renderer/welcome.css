@@ -1,0 +1,232 @@
+/* Palette lifted from the app icon: warm amber light, dark wood sill. */
+:root {
+  color-scheme: light dark;
+
+  --ground: #fbf7f2;
+  --raised: #ffffff;
+  --line: #e8ddd0;
+  --ink: #2b1d12;
+  --ink-soft: #6b5a4a;
+  --amber: #d9762a;
+  --amber-soft: #fdf1e2;
+  --amber-line: #f0cfa6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #201a15;
+    --raised: #2a231c;
+    --line: #3d332a;
+    --ink: #f4ece3;
+    --ink-soft: #b3a496;
+    --amber: #f0a055;
+    --amber-soft: #33261a;
+    --amber-line: #543b23;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0 24px 96px;
+  background: var(--ground);
+  color: var(--ink);
+  font: 14px/1.55 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* — hero —————————————————————————————————————————————————————————————— */
+
+.hero {
+  padding: 28px 0 22px;
+  text-align: center;
+}
+
+.hero__icon {
+  border-radius: 16px;
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hero__line {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+/* — cards ————————————————————————————————————————————————————————————— */
+
+.card {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* The tray card is the one that stops this feeling like malware, so it is the
+   one that gets the colour. */
+.card--warn {
+  background: var(--amber-soft);
+  border-color: var(--amber-line);
+}
+
+.card__mark {
+  flex: 0 0 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--ground);
+  border: 1px solid var(--line);
+}
+
+.card__mark--step {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--amber);
+}
+
+.card__body {
+  min-width: 0;
+}
+
+.card h2 {
+  margin: 4px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card p {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+}
+
+.card p:last-child {
+  margin-bottom: 0;
+}
+
+.card strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.note {
+  padding: 9px 11px;
+  border-left: 3px solid var(--amber);
+  background: var(--ground);
+  border-radius: 0 7px 7px 0;
+  font-size: 13px;
+}
+
+pre {
+  margin: 0 0 8px;
+  padding: 11px 13px;
+  overflow-x: auto;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+code {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12.5px;
+}
+
+p code {
+  padding: 1px 5px;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--ink);
+}
+
+/* — controls ——————————————————————————————————————————————————————————— */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.button {
+  padding: 8px 15px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--amber);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.button--primary {
+  color: #fff;
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+.button--primary:hover {
+  filter: brightness(1.07);
+}
+
+.button--quiet {
+  color: var(--ink-soft);
+  background: transparent;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 16px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--amber);
+  cursor: pointer;
+}
+
+/* Quit stays on screen at all times: the first thing someone needs to trust a
+   new overlay is knowing they can stop it. */
+footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  background: var(--ground);
+  border-top: 1px solid var(--line);
+}

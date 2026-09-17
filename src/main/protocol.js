@@ -10,6 +10,7 @@ const path = require('node:path');
  *
  *   cats://app/ui/...    -> src/renderer/
  *   cats://app/pets/...  -> cats/
+ *   cats://app/art/...   -> assets/
  */
 const SCHEME = 'cats';
 const ORIGIN = `${SCHEME}://app`;
@@ -33,8 +34,8 @@ function resolveWithin(root, segments) {
   return resolved.startsWith(fence) ? resolved : null;
 }
 
-function createHandler({ rendererRoot, catsRoot }) {
-  const mounts = { ui: rendererRoot, pets: catsRoot };
+function createHandler({ rendererRoot, catsRoot, assetsRoot }) {
+  const mounts = { ui: rendererRoot, pets: catsRoot, art: assetsRoot };
 
   return async (request) => {
     let segments;
