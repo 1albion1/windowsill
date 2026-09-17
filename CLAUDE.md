@@ -8,6 +8,7 @@ A transparent, always-on-top Windows overlay where photos of your own cats walk 
 npm start          # never `electron .` — see below
 npm run dev        # with DevTools
 npm run icons      # regenerate .ico after editing assets/*.svg
+npm run check      # pre-release checks — run before every release
 npm run dist       # public installer, no cats bundled
 npm run dist:mine  # installer with cats/ baked in, for personal machines
 ```
@@ -52,6 +53,8 @@ A cat is a folder of cutout PNGs. Everything about it can be inferred:
 
 A `cat.json` overrides any of it, and explicit config always wins over the filename. **Do not make configuration mandatory again** — a folder containing only `sit.png` must keep working, because most users will never write JSON.
 
+The recognised pose names live in the `poses` arrays in `behavior.js` and nowhere else. Every one of them is a filename someone may use, so a new state needs its own name first in its own chain — otherwise the behaviour exists but `chase.png` silently does nothing, which is how `chase` was broken until 0.2.1. `npm run check` enforces that the README, the welcome window and `prepare-cat` all list the same set.
+
 Photos are poses, not frames. All motion — walk bob, breathing, landing squash, mid-air tumble — is computed in `Cat#animation()`. If a cat looks stiff, that is the function to edit, not the artwork.
 
 ## Privacy rules for this repo
@@ -69,6 +72,10 @@ The cat paths are duplicated across the three SVGs. If you change the drawing, c
 ## Verifying UI changes
 
 The overlay and the welcome window can both be captured without screenshotting the user's desktop: load the page in a throwaway `BrowserWindow` with the real protocol handler and preload, then `webContents.capturePage()`. Prefer this over asking the user what they see, and over capturing the screen — their desktop is not yours to photograph.
+
+**A capture harness pointed at the repo proves nothing about the installer.** 0.2.0 shipped with a broken image in the welcome window: `extraResources` filtered assets by extension, the referenced `.svg` was not on the list, and the page rendered perfectly from source while the packaged app showed a broken image. Nothing errored — the file was simply absent.
+
+Run `npm run check` before any release. It verifies that every pose name in `behavior.js` is documented in both the README and the welcome window, that artwork referenced as `/art/...` exists and ships unfiltered, that it is present in the packaged build, and that the public build carries no cats. Add a check there whenever something breaks silently rather than loudly.
 
 ## Conventions
 

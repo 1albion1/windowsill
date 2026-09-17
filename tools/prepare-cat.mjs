@@ -22,7 +22,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CATS_ROOT = path.join(ROOT, 'cats');
 const MAX_EDGE = 512; // plenty at any sane on-screen cat size
 
-const KNOWN_POSES = ['sit', 'idle', 'stand', 'walk', 'run', 'groom', 'sleep', 'lie', 'fall', 'held', 'surprised'];
+const KNOWN_POSES = [
+  'sit', 'idle', 'stand', 'walk', 'run', 'chase',
+  'groom', 'sleep', 'lie', 'fall', 'held', 'surprised',
+];
 
 function parseArgs(argv) {
   const options = {};

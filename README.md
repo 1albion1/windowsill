@@ -52,21 +52,45 @@ Mochi/
 
 **The filename is the instruction.** The first part is the pose. The `-left` or `-right` says which way your cat is pointing **in that photo** — without it the app assumes right, and a left-facing cat will appear to walk backwards.
 
-| Name the file | When |
+#### Every name the app recognises
+
+These are worth having. Start with `sit`, add the others when you feel like it:
+
+| Name | The cat is… | If you don't have it |
+| --- | --- | --- |
+| `sit` | sitting upright — the pose it rests in most | `idle`, then `stand` |
+| `walk` | wandering, seen from the side | `stand`, `idle`, `sit` |
+| `sleep` | curled up asleep | `lie`, `sit`, `idle` |
+| `run` | sprinting, and skidding after a hard throw | `walk`, `stand`, `idle` |
+| `groom` | washing itself | `sit`, `idle` |
+| `idle` | standing about between things | `stand`, `sit` |
+
+These are used if present, and quietly substituted for if not. Nobody needs all of them:
+
+| Name | The cat is… | If you don't have it |
+| --- | --- | --- |
+| `chase` | going after your cursor | `run`, `walk`, `stand`, `idle` |
+| `stand` | on all fours, not moving | `idle`, `sit` |
+| `lie` | lying down but awake | `sit`, `idle` |
+| `fall` | in mid-air, dropped or thrown | `surprised`, `run`, `stand` |
+| `held` | being picked up and dragged | `surprised`, `fall`, `stand` |
+| `surprised` | startled — used when poked or falling | `fall`, `stand`, `idle` |
+
+**The fallbacks are why one photo works.** A folder containing only `sit.png` gives you a complete cat: every behaviour falls through to it eventually.
+
+#### Facing
+
+Add `-left`, `-right` or `-front` to any name above — `walk-left.png`, `sleep-right.png`, `sit-front.png`:
+
+| Suffix | Use it when |
 | --- | --- |
-| `sit.png` | sitting upright — the pose it rests in most |
-| `walk.png` | standing or walking, seen from the side |
-| `sleep.png` | curled up or lying down |
-| `run.png` | mid-sprint, if you have one |
-| `groom.png` | washing itself |
-| `idle.png` | standing around |
+| `-left` | the cat points left in that photo |
+| `-right` | the cat points right (this is the default if you leave it off) |
+| `-front` | the photo is head-on, so there's no direction to flip. Stops markings swapping sides when the cat turns around. |
 
-Add `-left`, `-right` or `-front` to any of them:
+#### File formats
 
-- **`-left`** / **`-right`** — which way the cat faces in the photo
-- **`-front`** — looking straight at the camera, so there's no direction to flip. Use this for head-on photos, otherwise the cat's markings swap sides as it turns around.
-
-**One photo is enough to start.** A folder containing only `sit.png` gives you a working cat that uses that photo for everything. Add more when you feel like it.
+**PNG** is what you want. **WebP** and **GIF** also work. A **JPEG will not** — it cannot store transparency, so your cat appears inside a rectangle.
 
 ### 3. Reload
 

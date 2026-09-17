@@ -230,3 +230,47 @@ footer {
   background: var(--ground);
   border-top: 1px solid var(--line);
 }
+
+/* — pose reference ————————————————————————————————————————————————————— */
+
+.card h3 {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.poses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 2px 14px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.poses li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 2px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.poses code {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--ink);
+}
+
+/* Poses the engine substitutes for if absent: present, but not a shopping list. */
+.poses--minor code {
+  background: transparent;
+  color: var(--ink-soft);
+}

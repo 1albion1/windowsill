@@ -1,6 +1,6 @@
 {
   "name": "windowsill",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Your cats live on your desktop, sitting on the taskbar like a sunlit windowsill.",
   "author": "Albion Berisha",
@@ -10,6 +10,7 @@
     "dev": "node tools/launch.mjs --dev",
     "icons": "node tools/make-icons.mjs",
     "prepare-cat": "node tools/prepare-cat.mjs",
+    "check": "node tools/check.mjs",
     "pack": "electron-builder --win --dir",
     "dist": "electron-builder --win",
     "dist:mine": "node tools/build-with-cats.mjs"
@@ -34,11 +35,7 @@
     "extraResources": [
       {
         "from": "assets",
-        "to": "assets",
-        "filter": [
-          "*.ico",
-          "*.png"
-        ]
+        "to": "assets"
       }
     ],
     "win": {

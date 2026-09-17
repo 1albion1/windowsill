@@ -42,7 +42,9 @@ export const STATES = {
     next: { sit: 4, groom: 1.5, idle: 1 },
   },
   chase: {
-    poses: ['run', 'walk', 'stand', 'idle'],
+    // 'chase' is listed first so the name works as a filename like every other
+    // behaviour, even though most cats will fall through to 'run'.
+    poses: ['chase', 'run', 'walk', 'stand', 'idle'],
     duration: [2500, 7000],
     speed: 105,
     next: { sit: 2.5, walk: 2, idle: 1 },
