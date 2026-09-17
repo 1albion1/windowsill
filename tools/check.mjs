@@ -14,6 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (relative) => fs.readFileSync(path.join(ROOT, relative), 'utf8');
@@ -74,6 +75,38 @@ function checkAssetsShip() {
     entry?.filter ? `filter would drop: ${JSON.stringify(entry.filter)}` : null);
 }
 
+/**
+ * Every cat image on disk should be reachable by the loader. A photo that sits
+ * in a folder doing nothing, with no error to explain why, is the worst kind of
+ * bug — it looks like the app ignored you.
+ */
+function checkCatsReachable() {
+  const catsRoot = path.join(ROOT, 'cats');
+  if (!fs.existsSync(catsRoot)) return;
+
+  const { loadCats } = createRequire(import.meta.url)('../src/main/cats-library.js');
+  const reachable = new Set();
+  for (const cat of loadCats(catsRoot)) {
+    for (const url of Object.values(cat.poses)) reachable.add(decodeURIComponent(url.split('/').pop()));
+  }
+
+  const orphans = [];
+  for (const cat of fs.readdirSync(catsRoot, { withFileTypes: true })) {
+    if (!cat.isDirectory()) continue;
+    for (const sub of ['', 'poses']) {
+      const dir = path.join(catsRoot, cat.name, sub);
+      if (!fs.existsSync(dir)) continue;
+      for (const file of fs.readdirSync(dir)) {
+        if (!/\.(png|webp|gif)$/i.test(file)) continue;
+        if (!reachable.has(file)) orphans.push(path.join(cat.name, sub, file));
+      }
+    }
+  }
+
+  report('every cat image is reachable by the loader', orphans.length === 0,
+    orphans.length ? `unreachable: ${orphans.join(', ')}` : `${reachable.size} images`);
+}
+
 function checkPackagedBuild() {
   const packaged = path.join(ROOT, 'dist', 'win-unpacked', 'resources');
   if (!fs.existsSync(packaged)) {
@@ -93,6 +126,7 @@ function checkPackagedBuild() {
 console.log('Windowsill checks\n');
 checkPosesDocumented();
 checkAssetsShip();
+checkCatsReachable();
 checkPackagedBuild();
 
 console.log('');

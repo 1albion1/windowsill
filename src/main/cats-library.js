@@ -12,12 +12,38 @@ const IMAGE_EXTENSIONS = new Set(['.png', '.webp', '.gif']);
  * cat.json. With no cat.json the pose name is taken from each file's stem, so
  * dropping sit.png / walk.png / sleep.png into a folder is enough to add a cat.
  */
+/**
+ * Images in the cat's folder and in its poses/ subfolder, as paths relative to
+ * the folder.
+ *
+ * Both are scanned because prepare-cat creates the poses/ layout, and dropping
+ * a new photo into it must work the same as dropping one into a flat folder.
+ * Scanning only the top level made a pose that cat.json did not already name
+ * invisible — the file sat there doing nothing, with no error to explain why.
+ *
+ * Deliberately not recursive: source/ holds full-resolution originals and is
+ * none of the loader's business.
+ */
+function listImages(folder) {
+  const images = [];
+
+  for (const sub of ['', 'poses']) {
+    const dir = path.join(folder, sub);
+    if (!fs.existsSync(dir)) continue;
+
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      if (!IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) continue;
+      images.push(sub ? `${sub}/${entry.name}` : entry.name);
+    }
+  }
+
+  return images;
+}
+
 function readCatFolder(catsRoot, id) {
   const folder = path.join(catsRoot, id);
-  const images = fs
-    .readdirSync(folder, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
-    .map((entry) => entry.name);
+  const images = listImages(folder);
 
   let config = {};
   const configPath = path.join(folder, 'cat.json');
@@ -41,13 +67,13 @@ function readCatFolder(catsRoot, id) {
   // Loose images fill in any pose the config did not name, and may carry their
   // facing in the filename — walk-left.png — so a whole cat can be set up by
   // naming files, with no JSON at all. An explicit cat.json still wins.
-  for (const name of images) {
-    const stem = path.basename(name, path.extname(name)).toLowerCase();
+  for (const relative of images) {
+    const stem = path.basename(relative, path.extname(relative)).toLowerCase();
     const tagged = /^(.+)-(left|right|front)$/.exec(stem);
     const pose = tagged ? tagged[1] : stem;
 
     if (poses[pose]) continue;
-    poses[pose] = toUrl(id, name);
+    poses[pose] = toUrl(id, relative);
     if (tagged && !poseFaces[pose]) poseFaces[pose] = tagged[2];
   }
 
