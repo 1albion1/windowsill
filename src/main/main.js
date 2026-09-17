@@ -1,0 +1,230 @@
+'use strict';
+
+const path = require('node:path');
+const fs = require('node:fs');
+const { app, BrowserWindow, Menu, Tray, ipcMain, protocol, screen, shell } = require('electron');
+
+const { getDesktopGeometry } = require('./desktop');
+const { loadCats } = require('./cats-library');
+const { createTrayIcon } = require('./tray-icon');
+const { SCHEME, ORIGIN, createHandler } = require('./protocol');
+
+const APP_ID = 'com.windowsill.desktop';
+const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
+const IS_DEV = process.argv.includes('--dev');
+
+/**
+ * A non-focusable window never steals focus from whatever you are typing in,
+ * which is what you want from an overlay. If dragging a cat ever stops
+ * responding on your machine, flip this to true — that is the known trade-off.
+ */
+const FOCUSABLE = false;
+
+// Resolved once the app is ready, since both depend on how it was launched.
+let catsRoot = null;
+let assetsRoot = null;
+
+let overlay = null;
+let tray = null;
+let paused = false;
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } },
+]);
+
+/**
+ * Running from source, cats live in the repo next to the code. Installed, that
+ * folder is inside a read-only asar, so they move to the user's own data
+ * directory — somewhere they can actually drop photos.
+ */
+function resolvePaths() {
+  catsRoot = app.isPackaged
+    ? path.join(app.getPath('userData'), 'cats')
+    : path.join(app.getAppPath(), 'cats');
+
+  assetsRoot = app.isPackaged
+    ? path.join(process.resourcesPath, 'assets')
+    : path.join(app.getAppPath(), 'assets');
+}
+
+/**
+ * Copies any cats shipped with the installer into the user's folder on first
+ * run, skipping those already there. This is what stops a fresh install being
+ * an empty desktop, without ever overwriting the user's own edits.
+ */
+function seedCats() {
+  if (!app.isPackaged) return;
+
+  const bundled = path.join(process.resourcesPath, 'cats');
+  if (!fs.existsSync(bundled)) return;
+
+  for (const entry of fs.readdirSync(bundled, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const target = path.join(catsRoot, entry.name);
+    if (fs.existsSync(target)) continue;
+
+    try {
+      fs.cpSync(path.join(bundled, entry.name), target, { recursive: true });
+      console.log(`[cats] seeded ${entry.name}`);
+    } catch (error) {
+      console.error(`[cats] could not seed ${entry.name}:`, error.message);
+    }
+  }
+}
+
+function createOverlay() {
+  const geometry = getDesktopGeometry();
+
+  overlay = new BrowserWindow({
+    ...geometry.bounds,
+    title: 'Windowsill',
+    transparent: true,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    focusable: FOCUSABLE,
+    alwaysOnTop: true,
+    acceptFirstMouse: true,
+    enableLargerThanScreen: true,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      backgroundThrottling: false,
+    },
+  });
+
+  // 'screen-saver' keeps the cats above other always-on-top windows.
+  overlay.setAlwaysOnTop(true, 'screen-saver');
+  overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  // Start fully click-through. `forward: true` still delivers mousemove to the
+  // renderer, which is how it notices the cursor arriving over a cat.
+  overlay.setIgnoreMouseEvents(true, { forward: true });
+
+  overlay.loadURL(`${ORIGIN}/ui/index.html`);
+
+  if (IS_DEV) overlay.webContents.openDevTools({ mode: 'detach' });
+
+  // The overlay has no visible chrome, so renderer errors would otherwise be
+  // silent. Mirror its console into the terminal that started the app.
+  overlay.webContents.on('console-message', (...args) => {
+    const details = typeof args[0] === 'object' && args[0] !== null && 'message' in args[0] ? args[0] : null;
+    const message = details ? details.message : args[2];
+    const level = details ? details.level : args[1];
+    if (IS_DEV || level === 'error' || level === 2) console.log(`[renderer] ${message}`);
+  });
+
+  overlay.on('closed', () => {
+    overlay = null;
+  });
+}
+
+function pushGeometry() {
+  if (!overlay) return;
+  const geometry = getDesktopGeometry();
+  overlay.setBounds(geometry.bounds);
+  overlay.setAlwaysOnTop(true, 'screen-saver');
+  overlay.webContents.send('overlay:geometry', geometry);
+}
+
+function setPaused(value) {
+  paused = value;
+  overlay?.webContents.send('overlay:paused', paused);
+  buildTrayMenu();
+}
+
+function setAutoStart(enabled) {
+  app.setLoginItemSettings({ openAtLogin: enabled, name: 'Windowsill' });
+  buildTrayMenu();
+}
+
+function buildTrayMenu() {
+  if (!tray) return;
+
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: paused ? 'Resume cats' : 'Pause cats', click: () => setPaused(!paused) },
+      { type: 'separator' },
+      { label: 'Reload cats', click: () => overlay?.webContents.send('overlay:cats', loadCats(catsRoot)) },
+      { label: 'Open cats folder…', click: () => shell.openPath(catsRoot) },
+      { type: 'separator' },
+      {
+        // In development this would register electron.exe rather than the app,
+        // so it is only offered once installed.
+        label: app.isPackaged ? 'Start with Windows' : 'Start with Windows (installed app only)',
+        type: 'checkbox',
+        enabled: app.isPackaged,
+        checked: app.getLoginItemSettings().openAtLogin,
+        click: (item) => setAutoStart(item.checked),
+      },
+      { type: 'separator' },
+      { label: 'Quit Windowsill', click: () => app.exit(0) },
+    ]),
+  );
+}
+
+function createTray() {
+  tray = new Tray(createTrayIcon(assetsRoot));
+  tray.setToolTip('Windowsill');
+  tray.on('click', () => tray.popUpContextMenu());
+  buildTrayMenu();
+}
+
+function registerIpc() {
+  ipcMain.handle('overlay:get-state', () => ({
+    geometry: getDesktopGeometry(),
+    cats: loadCats(catsRoot),
+    paused,
+  }));
+
+  ipcMain.handle('cats:reload', () => loadCats(catsRoot));
+
+  // The renderer owns hit-testing: it knows where every cat is and which of its
+  // pixels are opaque, so it tells us when the cursor is over one.
+  ipcMain.on('overlay:set-interactive', (_event, interactive) => {
+    if (!overlay) return;
+    if (interactive) overlay.setIgnoreMouseEvents(false);
+    else overlay.setIgnoreMouseEvents(true, { forward: true });
+  });
+
+  ipcMain.on('app:open-cats-folder', () => shell.openPath(catsRoot));
+
+  ipcMain.on('overlay:ready', (_event, summary) => {
+    console.log(`[cats] overlay ready: ${summary.count} cat(s) — ${summary.names.join(', ') || 'none'}`);
+  });
+}
+
+if (!app.requestSingleInstanceLock()) {
+  app.exit(0);
+} else {
+  // Without this Windows groups the app under Electron's own identity, which
+  // costs it its taskbar icon and its notifications.
+  app.setAppUserModelId(APP_ID);
+
+  app.whenReady().then(() => {
+    resolvePaths();
+    fs.mkdirSync(catsRoot, { recursive: true });
+    seedCats();
+
+    protocol.handle(SCHEME, createHandler({ rendererRoot: RENDERER_ROOT, catsRoot }));
+
+    registerIpc();
+    createOverlay();
+    createTray();
+
+    screen.on('display-added', pushGeometry);
+    screen.on('display-removed', pushGeometry);
+    screen.on('display-metrics-changed', pushGeometry);
+  });
+
+  // Tray app: closing the overlay must not end the process.
+  app.on('window-all-closed', () => {});
+}

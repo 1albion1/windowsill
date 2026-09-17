@@ -1,0 +1,6 @@
+node_modules/
+dist/
+out/
+
+# Your cats' photos stay local by default. Delete this line to version them.
+cats/*/

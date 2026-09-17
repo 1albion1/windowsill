@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Windowsill app icon.
+
+    A backlit cat sitting on a sunlit sill. The composition is deliberately
+    top-heavy on contrast: at 16px the window frame and sill dissolve into
+    texture, but the dark cat against warm light still reads as a cat.
+  -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#ffdf9b" />
+      <stop offset="0.5" stop-color="#f7ad4a" />
+      <stop offset="1" stop-color="#e07f2a" />
+    </linearGradient>
+
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6d8" stop-opacity="0.95" />
+      <stop offset="1" stop-color="#fff6d8" stop-opacity="0" />
+    </radialGradient>
+
+    <clipPath id="frame">
+      <rect x="0" y="0" width="512" height="512" rx="104" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="512" height="512" fill="url(#sky)" />
+    <circle cx="150" cy="140" r="190" fill="url(#sun)" />
+
+    <!-- Window: an outer frame and a single cross, kept thin so it stays
+         background texture rather than competing with the cat. -->
+    <g stroke="#88491d" stroke-opacity="0.45" fill="none" stroke-linecap="square">
+      <rect x="46" y="30" width="420" height="376" rx="18" stroke-width="20" />
+      <path d="M256 40 V398 M56 200 H456" stroke-width="16" />
+    </g>
+
+    <!-- The cat, in silhouette because she is between you and the light. -->
+    <g fill="#2b1d12">
+      <path d="M320 392 C396 404 444 374 436 322 C430 284 402 268 386 286"
+            fill="none" stroke="#2b1d12" stroke-width="27" stroke-linecap="round" />
+      <ellipse cx="250" cy="345" rx="82" ry="58" />
+      <ellipse cx="248" cy="292" rx="54" ry="66" />
+      <circle cx="246" cy="216" r="58" />
+      <path d="M196 188 L190 124 L236 170 Z" />
+      <path d="M296 188 L302 124 L256 170 Z" />
+    </g>
+
+    <!-- Light catching the eyes: the one cue that survives to 16px. -->
+    <g fill="#ffd98a">
+      <ellipse cx="227" cy="209" rx="8.5" ry="11" />
+      <ellipse cx="267" cy="209" rx="8.5" ry="11" />
+    </g>
+
+    <!-- The sill. It runs past the frame on both sides, the way a real ledge does. -->
+    <rect x="0" y="398" width="512" height="114" fill="#6d3a16" />
+    <rect x="0" y="398" width="512" height="16" fill="#9a5a26" />
+  </g>
+</svg>

@@ -1,0 +1,68 @@
+{
+  "name": "windowsill",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your cats live on your desktop, sitting on the taskbar like a sunlit windowsill.",
+  "author": "Albion Berisha",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "node tools/launch.mjs",
+    "dev": "node tools/launch.mjs --dev",
+    "icons": "node tools/make-icons.mjs",
+    "prepare-cat": "node tools/prepare-cat.mjs",
+    "pack": "electron-builder --win --dir",
+    "dist": "electron-builder --win",
+    "dist:mine": "node tools/build-with-cats.mjs"
+  },
+  "devDependencies": {
+    "electron": "^44.4.1",
+    "electron-builder": "^26.15.3",
+    "sharp": "^0.35.4"
+  },
+  "build": {
+    "appId": "com.windowsill.desktop",
+    "productName": "Windowsill",
+    "copyright": "Copyright (c) 2026 Albion Berisha",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "*.ico",
+          "*.png"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-${version}-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Windowsill",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "runAfterFinish": true
+    }
+  }
+}
