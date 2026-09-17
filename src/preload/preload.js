@@ -17,4 +17,5 @@ contextBridge.exposeInMainWorld('overlay', {
   onGeometry: (callback) => subscribe('overlay:geometry', callback),
   onCats: (callback) => subscribe('overlay:cats', callback),
   onPaused: (callback) => subscribe('overlay:paused', callback),
+  onSize: (callback) => subscribe('overlay:size', callback),
 });

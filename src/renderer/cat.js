@@ -23,6 +23,7 @@ export class Cat {
     this.poseScale = definition.poseScale ?? {};
     this.autoScale = deriveAutoScales(poses);
     this.faces = definition.faces ?? 'right';
+    this.sizeScale = 1; // global size setting, layered over the cat's own height
     this.poseFaces = definition.poseFaces ?? {};
 
     const spawn = world.spawnPoint();
@@ -113,7 +114,7 @@ export class Cat {
   /** How tall this cat stands in its current pose. */
   standingHeight() {
     const name = this.pose?.name;
-    return this.height * (this.poseScale[name] ?? this.autoScale[name] ?? 1);
+    return this.height * this.sizeScale * (this.poseScale[name] ?? this.autoScale[name] ?? 1);
   }
 
   // -- interaction ---------------------------------------------------------
@@ -284,7 +285,7 @@ export class Cat {
         const rate = this.state === 'walk' ? 7.5 : 12.5;
         const phase = t * rate;
         return {
-          bob: -Math.abs(Math.sin(phase)) * this.height * 0.035,
+          bob: -Math.abs(Math.sin(phase)) * this.standingHeight() * 0.035,
           angle: Math.sin(phase * 0.5) * 2.4,
           stretch: Math.sin(phase) * 0.03,
         };

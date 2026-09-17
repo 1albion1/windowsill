@@ -13,6 +13,7 @@ const stage = document.getElementById('stage');
 let world = null;
 let cats = [];
 let paused = false;
+let sizeScale = 1;
 
 let cursor = null;
 let interactive = false;
@@ -53,7 +54,9 @@ async function buildCats(definitions) {
       continue;
     }
     for (let copy = 0; copy < (definition.count ?? 1); copy++) {
-      cats.push(new Cat({ definition, poses, world, stage }));
+      const cat = new Cat({ definition, poses, world, stage });
+      cat.sizeScale = sizeScale;
+      cats.push(cat);
     }
   }
 }
@@ -63,7 +66,7 @@ function noticeCursor() {
   for (const cat of cats) {
     if (cat.state !== 'sleep') continue;
     const dx = cat.x - cursor.x;
-    const dy = cat.y - cat.height / 2 - cursor.y;
+    const dy = cat.y - cat.standingHeight() / 2 - cursor.y;
     // A slow trickle rather than an instant wake: a cursor passing through can
     // be slept through, but one that lingers nearby will rouse her.
     if (dx * dx + dy * dy < NOTICE_RADIUS * NOTICE_RADIUS && Math.random() < WAKE_CHANCE) cat.wake();
@@ -142,17 +145,27 @@ async function main() {
 
   world = new World(state.geometry);
   paused = state.paused;
+  sizeScale = state.sizeScale ?? 1;
 
   await buildCats(state.cats);
   bindPointer();
   startLoop();
 
-  window.overlay.reportReady({ count: cats.length, names: cats.map((cat) => cat.definition.name) });
+  window.overlay.reportReady({
+    count: cats.length,
+    names: cats.map((cat) => cat.definition.name),
+    sizeScale,
+    heights: cats.map((cat) => Math.round(cat.standingHeight())),
+  });
 
   window.overlay.onGeometry((geometry) => world.setGeometry(geometry));
   window.overlay.onCats((definitions) => buildCats(definitions));
   window.overlay.onPaused((value) => {
     paused = value;
+  });
+  window.overlay.onSize((value) => {
+    sizeScale = value;
+    for (const cat of cats) cat.sizeScale = value;
   });
 }
 

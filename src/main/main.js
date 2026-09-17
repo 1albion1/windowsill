@@ -13,6 +13,19 @@ const settings = require('./settings');
 
 const APP_ID = 'com.windowsill.desktop';
 const GUIDE_URL = 'https://github.com/1albion1/windowsill#add-your-cats';
+
+/**
+ * A global multiplier over each cat's own `height`, so cats can be resized
+ * without editing anyone's cat.json. Kept coarse on purpose: a menu of named
+ * sizes is a decision, a slider is a fiddle.
+ */
+const SIZES = [
+  { label: 'Tiny', value: 0.5 },
+  { label: 'Small', value: 0.75 },
+  { label: 'Normal', value: 1 },
+  { label: 'Large', value: 1.4 },
+  { label: 'Huge', value: 1.9 },
+];
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 const IS_DEV = process.argv.includes('--dev');
 
@@ -138,6 +151,17 @@ function pushGeometry() {
   overlay.webContents.send('overlay:geometry', geometry);
 }
 
+function currentSize() {
+  const stored = settings.get('sizeScale', 1);
+  return SIZES.some((size) => size.value === stored) ? stored : 1;
+}
+
+function setSize(value) {
+  settings.set('sizeScale', value);
+  overlay?.webContents.send('overlay:size', value);
+  buildTrayMenu();
+}
+
 function setPaused(value) {
   paused = value;
   overlay?.webContents.send('overlay:paused', paused);
@@ -159,6 +183,15 @@ function buildTrayMenu() {
       { label: 'Reload cats', click: () => overlay?.webContents.send('overlay:cats', loadCats(catsRoot)) },
       { label: 'Open cats folder…', click: () => shell.openPath(catsRoot) },
       { label: 'How to add your cats…', click: () => showWelcome() },
+      {
+        label: 'Cat size',
+        submenu: SIZES.map((size) => ({
+          label: size.value === 1 ? `${size.label} (default)` : size.label,
+          type: 'radio',
+          checked: currentSize() === size.value,
+          click: () => setSize(size.value),
+        })),
+      },
       { type: 'separator' },
       {
         // In development this would register electron.exe rather than the app,
@@ -187,6 +220,7 @@ function registerIpc() {
     geometry: getDesktopGeometry(),
     cats: loadCats(catsRoot),
     paused,
+    sizeScale: currentSize(),
   }));
 
   ipcMain.handle('cats:reload', () => loadCats(catsRoot));
@@ -212,7 +246,11 @@ function registerIpc() {
   });
 
   ipcMain.on('overlay:ready', (_event, summary) => {
-    console.log(`[cats] overlay ready: ${summary.count} cat(s) — ${summary.names.join(', ') || 'none'}`);
+    const sizes = summary.heights?.length ? `, ${summary.heights.join('/')}px tall` : '';
+    console.log(
+      `[cats] overlay ready: ${summary.count} cat(s) — ${summary.names.join(', ') || 'none'}` +
+        ` (size ${summary.sizeScale ?? 1}x${sizes})`,
+    );
   });
 }
 

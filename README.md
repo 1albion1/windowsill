@@ -16,7 +16,7 @@ Download **`Windowsill-setup.exe`** from the [latest release](../../releases/lat
 
 Windows will show *"Windows protected your PC"* the first time. The installer is not code-signed — that needs a paid certificate, which is hard to justify for a free cat toy. Click **More info → Run anyway**.
 
-A window opens the first time explaining how it works, and a cat icon appears in your system tray. Everything lives in that tray menu: pause, reload, start-with-Windows, quit.
+A window opens the first time explaining how it works, and a cat icon appears in your system tray. Everything lives in that tray menu: pause, reload, **cat size**, start-with-Windows, quit.
 
 > **Windows 11 hides new tray icons.** If you can't see the cat, click the **^** arrow next to the clock, then drag it down onto the taskbar to keep it there. You can reopen the instructions any time with **How to add your cats…** in that menu.
 
@@ -100,6 +100,24 @@ That's it. Sizes are worked out automatically — the app measures your cat in e
 
 ---
 
+## Size
+
+**Tray icon → Cat size.** Five options, applied to every cat at once, remembered between restarts:
+
+| Option | Snow, sitting | Snow, asleep |
+| --- | --- | --- |
+| Tiny | 85px | 34px |
+| Small | 128px | 51px |
+| Normal | 170px | 68px |
+| Large | 238px | 95px |
+| Huge | 323px | 129px |
+
+This multiplies each cat's own `height`, so a cat you have deliberately made small stays smaller than the others at every setting. Changes apply immediately — no reload.
+
+For one cat rather than all of them, set `height` in its `cat.json` below.
+
+---
+
 ## Tuning
 
 Only if you want to. Add a `cat.json` next to the photos:
@@ -115,7 +133,7 @@ Only if you want to. Add a `cat.json` next to the photos:
 
 | Setting | Does what |
 | --- | --- |
-| `height` | How tall the cat is on screen, in pixels (40–500). **The one worth adjusting.** |
+| `height` | How tall this cat is on screen, in pixels (40–500), before the tray's **Cat size** multiplier. |
 | `speed` | Walking and running speed. `0.5` is an amble, `2` is a menace. |
 | `count` | How many of this cat wander about at once (1–12). |
 
