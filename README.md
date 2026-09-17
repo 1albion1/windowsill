@@ -98,6 +98,8 @@ Right-click the tray icon → **Reload cats**. Your cat appears.
 
 That's it. Sizes are worked out automatically — the app measures your cat in each photo and scales the poses so a curled sleeping cat doesn't come out as tall as a sitting one.
 
+**Adding a pose later** works the same way: drop the new photo in and reload. Both the cat's folder and a `poses/` subfolder inside it are scanned, so it does not matter which layout your cat uses, and you never have to edit `cat.json` to register a file.
+
 ---
 
 ## Size
