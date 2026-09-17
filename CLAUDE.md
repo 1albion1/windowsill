@@ -9,6 +9,7 @@ npm start          # never `electron .` — see below
 npm run dev        # with DevTools
 npm run icons      # regenerate .ico after editing assets/*.svg
 npm run check      # pre-release checks — run before every release
+npm run install:local  # install the built .exe on this machine
 npm run dist       # public installer, no cats bundled
 npm run dist:mine  # installer with cats/ baked in, for personal machines
 ```
@@ -56,6 +57,19 @@ A `cat.json` overrides any of it, and explicit config always wins over the filen
 The recognised pose names live in the `poses` arrays in `behavior.js` and nowhere else. Every one of them is a filename someone may use, so a new state needs its own name first in its own chain — otherwise the behaviour exists but `chase.png` silently does nothing, which is how `chase` was broken until 0.2.1. `npm run check` enforces that the README, the welcome window and `prepare-cat` all list the same set.
 
 Photos are poses, not frames. All motion — walk bob, breathing, landing squash, mid-air tumble — is computed in `Cat#animation()`. If a cat looks stiff, that is the function to edit, not the artwork.
+
+## Releasing
+
+The user wants every release installed on their machine afterwards. The order is:
+
+1. `npm run check` — must be all green
+2. `npm run dist`
+3. `gh release create vX.Y.Z dist/Windowsill-X.Y.Z-setup.exe --notes-file ...`
+4. `npm run install:local`
+
+**Silent is not unattended.** The existing install is per-machine, under `C:\Program Files\Windowsill`, so Windows raises a UAC prompt that NSIS's `/S` cannot suppress and the installer blocks until someone approves it. Do not try to route around that — say plainly that the prompt is on screen and waiting. A per-user install would need no prompt, but switching means uninstalling the per-machine copy first, which is the user's call.
+
+`install:local` reads the install location from the registry rather than assuming, because an upgrade inherits whatever the previous install chose, and verifies the registered version matches `package.json` so a half-finished upgrade fails loudly.
 
 ## Privacy rules for this repo
 

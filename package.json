@@ -13,7 +13,8 @@
     "check": "node tools/check.mjs",
     "pack": "electron-builder --win --dir",
     "dist": "electron-builder --win",
-    "dist:mine": "node tools/build-with-cats.mjs"
+    "dist:mine": "node tools/build-with-cats.mjs",
+    "install:local": "node tools/install-local.mjs"
   },
   "devDependencies": {
     "electron": "^44.4.1",
