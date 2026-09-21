@@ -36,7 +36,11 @@ Main and preload are CommonJS; renderer and tools are ESM. `package.json` has no
 
 **Everything is served from one origin.** UI, cat images and artwork all come from `cats://app/` (`/ui/`, `/pets/`, `/art/`). This is not decoration: the renderer reads sprite pixels back out of a canvas to build hit-masks, and a second origin would taint the canvas and break click-through. Do not load cat images from `file://` or a second scheme.
 
-**Click-through is toggled, not static.** The overlay runs with `setIgnoreMouseEvents(true, { forward: true })` so it still receives mousemove. When the renderer finds the cursor over a non-transparent pixel of a cat it asks main to go solid, and back again on exit. If you add UI to the overlay, it will be invisible to the mouse unless you extend that hit test.
+**Click-through is toggled, not static, and the pointer position is polled.** The overlay goes solid only while the cursor is over a non-transparent pixel of a cat, then back to click-through on exit.
+
+Do not make that depend on `setIgnoreMouseEvents(true, { forward: true })`. Forwarded mouse moves stop arriving on Windows once the app is not the foreground window, and this overlay is deliberately non-focusable, so it never is — the cats stopped responding the moment you clicked into another application. `startCursorTracking()` in `main.js` polls `screen.getCursorScreenPoint()` and pushes the position to the renderer, which works regardless of focus. `forward: true` is still set, purely as a latency win when the app does happen to be foreground.
+
+Run with `--trace-input` to log the click-through toggle with cursor positions and, every two seconds, where each cat's box is. `--paused` freezes them so they are steady targets. If you add UI to the overlay, it will be invisible to the mouse unless you extend the hit test.
 
 **`Cat#mirror()` is the single source of truth for flipping.** It combines where the cat is headed with which way its photo faces. Both rendering and hit-testing call it. If you inline the flip in one of them, clicks land beside the cat instead of on it.
 

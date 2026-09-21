@@ -14,6 +14,8 @@ let world = null;
 let cats = [];
 let paused = false;
 let sizeScale = 1;
+let tracing = false;
+const trace = (message) => { if (tracing) window.overlay.trace(message); };
 
 let cursor = null;
 let interactive = false;
@@ -22,9 +24,11 @@ let pressedAt = null;
 
 /**
  * The overlay is click-through by default, so it never intercepts clicks meant
- * for your actual work. `forward: true` on the main-process side keeps
- * mousemove flowing here, which is the only reason we can notice the cursor
- * arriving over a cat and briefly become solid.
+ * for your actual work. It goes solid only while the pointer is over a cat.
+ *
+ * The pointer position comes from the main process polling the global cursor,
+ * not from mousemove: forwarded mouse moves stop arriving once the app is not
+ * the foreground window, and this overlay is never focusable.
  */
 function setInteractive(next) {
   if (next === interactive) return;
@@ -96,21 +100,35 @@ function startLoop() {
   requestAnimationFrame(frame);
 }
 
-function bindPointer() {
-  window.addEventListener('mousemove', (event) => {
-    cursor = { x: event.clientX, y: event.clientY };
+/**
+ * Where the pointer is, and whether it is over a cat.
+ *
+ * Called both from the main process's cursor poll (which works while the
+ * overlay is click-through and unfocused) and from real mousemove events
+ * (which only arrive once we have gone solid, but are lower latency).
+ */
+function trackCursor(x, y) {
+  cursor = { x, y };
 
-    if (dragged) {
-      dragged.dragTo(cursor.x, cursor.y);
-      return; // stay solid for the whole drag, even outside the cat
-    }
-    setInteractive(Boolean(catAt(cursor.x, cursor.y)));
-  });
+  if (dragged) {
+    dragged.dragTo(x, y);
+    return; // stay solid for the whole drag, even outside the cat
+  }
+  setInteractive(Boolean(catAt(x, y)));
+}
+
+function bindPointer() {
+  window.addEventListener('mousemove', (event) => trackCursor(event.clientX, event.clientY));
 
   window.addEventListener('mousedown', (event) => {
+    trace(`mousedown button=${event.button} at ${event.clientX},${event.clientY}`);
     if (event.button !== 0) return;
     const cat = catAt(event.clientX, event.clientY);
-    if (!cat) return;
+    if (!cat) {
+      trace('  no cat under that point');
+      return;
+    }
+    trace(`  grabbed ${cat.definition.name}`);
 
     dragged = cat;
     pressedAt = { x: event.clientX, y: event.clientY, t: performance.now() };
@@ -158,11 +176,22 @@ async function main() {
     heights: cats.map((cat) => Math.round(cat.standingHeight())),
   });
 
+  tracing = Boolean(state.traceInput);
+  if (tracing) {
+    setInterval(() => {
+      const boxes = cats
+        .map((cat) => `${cat.definition.name}@${Math.round(cat.box.left)},${Math.round(cat.box.top)} ${Math.round(cat.box.width)}x${Math.round(cat.box.height)} ${cat.state}`)
+        .join('  |  ');
+      trace(`boxes: ${boxes}`);
+    }, 2000);
+  }
+
   window.overlay.onGeometry((geometry) => world.setGeometry(geometry));
   window.overlay.onCats((definitions) => buildCats(definitions));
   window.overlay.onPaused((value) => {
     paused = value;
   });
+  window.overlay.onCursor(({ x, y }) => trackCursor(x, y));
   window.overlay.onSize((value) => {
     sizeScale = value;
     for (const cat of cats) cat.sizeScale = value;

@@ -219,7 +219,9 @@ Installed, the app's own folder is a read-only archive, so cats live somewhere y
 
 The overlay is a single transparent, always-on-top, click-through window spanning every monitor, with the cats as elements inside it. Four decisions carry most of the weight:
 
-**Click-through is toggled per pixel.** The window forwards mouse movement while ignoring clicks, so the renderer can watch the cursor without intercepting anything. The moment it lands on a non-transparent pixel of a cat, the window becomes solid; when it leaves, click-through returns. Sprite alpha is downsampled into a hit-mask at load, so you can click between a cat's legs and reach what's behind.
+**Click-through is toggled per pixel.** The main process polls the global cursor position and tells the renderer, which hit-tests it against each cat. The moment it lands on a non-transparent pixel, the window becomes solid; when it leaves, click-through returns. Sprite alpha is downsampled into a hit-mask at load, so you can click between a cat's legs and reach what's behind.
+
+Polling rather than forwarded mouse events is deliberate: Windows stops forwarding them to a click-through window once the app is not in the foreground, and this one is never focusable.
 
 **Everything is served from one origin.** The UI and the cat images both come from `cats://app/`, because the renderer reads sprite pixels back out of a canvas to build those masks — and a second origin would taint the canvas and break it.
 

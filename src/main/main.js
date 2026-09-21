@@ -28,6 +28,8 @@ const SIZES = [
 ];
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 const IS_DEV = process.argv.includes('--dev');
+// Diagnostic for the click-through toggle, which is otherwise invisible.
+const TRACE_INPUT = process.argv.includes('--trace-input');
 
 /**
  * A non-focusable window never steals focus from whatever you are typing in,
@@ -42,7 +44,11 @@ let assetsRoot = null;
 
 let overlay = null;
 let tray = null;
-let paused = false;
+let cursorPoll = null;
+let overlayOrigin = { x: 0, y: 0 };
+// --paused freezes the cats at startup, which makes them clickable targets
+// while debugging input.
+let paused = process.argv.includes('--paused');
 
 protocol.registerSchemesAsPrivileged([
   { scheme: SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -90,6 +96,7 @@ function seedCats() {
 
 function createOverlay() {
   const geometry = getDesktopGeometry();
+  overlayOrigin = geometry.origin;
 
   overlay = new BrowserWindow({
     ...geometry.bounds,
@@ -121,8 +128,10 @@ function createOverlay() {
   overlay.setAlwaysOnTop(true, 'screen-saver');
   overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
-  // Start fully click-through. `forward: true` still delivers mousemove to the
-  // renderer, which is how it notices the cursor arriving over a cat.
+  // Start fully click-through. `forward: true` delivers mousemove to the
+  // renderer while the app happens to be foreground, which is a latency win but
+  // not something to depend on — startCursorTracking is what actually keeps the
+  // renderer informed.
   overlay.setIgnoreMouseEvents(true, { forward: true });
 
   overlay.loadURL(`${ORIGIN}/ui/index.html`);
@@ -139,13 +148,54 @@ function createOverlay() {
   });
 
   overlay.on('closed', () => {
+    stopCursorTracking();
     overlay = null;
   });
+}
+
+/**
+ * Tells the renderer where the pointer is, about 60 times a second.
+ *
+ * The overlay used to rely on `setIgnoreMouseEvents(true, { forward: true })`
+ * to keep mousemove flowing while click-through. It does not, reliably: on
+ * Windows those forwarded moves dry up once the app is not the foreground
+ * window — and this overlay is deliberately non-focusable, so it never is.
+ * The result was that cats stopped responding to the cursor as soon as you
+ * clicked into any other application, which is to say almost immediately.
+ *
+ * Polling the global cursor costs a cheap syscall and works regardless of
+ * focus. Nothing is sent while the pointer is still.
+ */
+function startCursorTracking() {
+  stopCursorTracking();
+
+  let lastX = null;
+  let lastY = null;
+
+  cursorPoll = setInterval(() => {
+    if (!overlay || overlay.isDestroyed()) return;
+
+    const { x, y } = screen.getCursorScreenPoint();
+    if (x === lastX && y === lastY) return;
+    lastX = x;
+    lastY = y;
+
+    overlay.webContents.send('overlay:cursor', {
+      x: x - overlayOrigin.x,
+      y: y - overlayOrigin.y,
+    });
+  }, 16);
+}
+
+function stopCursorTracking() {
+  if (cursorPoll) clearInterval(cursorPoll);
+  cursorPoll = null;
 }
 
 function pushGeometry() {
   if (!overlay) return;
   const geometry = getDesktopGeometry();
+  overlayOrigin = geometry.origin;
   overlay.setBounds(geometry.bounds);
   overlay.setAlwaysOnTop(true, 'screen-saver');
   overlay.webContents.send('overlay:geometry', geometry);
@@ -221,6 +271,7 @@ function registerIpc() {
     cats: loadCats(catsRoot),
     paused,
     sizeScale: currentSize(),
+    traceInput: TRACE_INPUT,
   }));
 
   ipcMain.handle('cats:reload', () => loadCats(catsRoot));
@@ -229,6 +280,10 @@ function registerIpc() {
   // pixels are opaque, so it tells us when the cursor is over one.
   ipcMain.on('overlay:set-interactive', (_event, interactive) => {
     if (!overlay) return;
+    if (TRACE_INPUT) {
+      const { x, y } = screen.getCursorScreenPoint();
+      console.log(`[input] set-interactive ${interactive} at cursor ${x},${y}`);
+    }
     if (interactive) overlay.setIgnoreMouseEvents(false);
     else overlay.setIgnoreMouseEvents(true, { forward: true });
   });
@@ -243,6 +298,10 @@ function registerIpc() {
   ipcMain.handle('app:set-auto-start', (_event, enabled) => {
     setAutoStart(enabled);
     return app.getLoginItemSettings().openAtLogin;
+  });
+
+  ipcMain.on('overlay:trace', (_event, message) => {
+    if (TRACE_INPUT) console.log(`[input] ${message}`);
   });
 
   ipcMain.on('overlay:ready', (_event, summary) => {
@@ -271,6 +330,7 @@ if (!app.requestSingleInstanceLock()) {
     registerIpc();
     createOverlay();
     createTray();
+    startCursorTracking();
 
     if (!settings.get('welcomed', false)) {
       settings.set('welcomed', true);
